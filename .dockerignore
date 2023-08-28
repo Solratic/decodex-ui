@@ -1,0 +1,7 @@
+__pycache__/
+.chainlit/
+venv/
+.env
+.gitignore
+chainlit.md
+Dockerfile
