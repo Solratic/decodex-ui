@@ -51,6 +51,27 @@ This will pull the necessary Docker images and start the Decodex-UI application.
 
 Open your web browser and go to [localhost:8000](http://localhost:8000) to start using Decodex-UI.
 
+## Usage
+
+The following sections describe how to use the application with its api endpoints. You may check the [api docs here](http://loclahost:8000/docs)
+
+You should start the app by running `docker compose up -d` in the project directory.
+
+- Get transaction details
+
+  ```bash
+  curl localhost:8000/tx/0xeacbfa8fc611203120c93d8248eabd1a60b11ba103e8c5bdd773f83271e97a51
+  ```
+
+- Simulate a transaction
+
+  ```bash
+  curl localhost:8000/simulate/?from_address=0x31539c7a1bA66c74cAb1D05C5A1832C
+  B583aA64D&to_address=0x898e51FDFd3DA66912330eB95788Fc3c26d2913C
+  ```
+
+```
+
 ## Support
 
 If you encounter any issues or have questions, please open an issue on GitHub.
@@ -58,3 +79,4 @@ If you encounter any issues or have questions, please open an issue on GitHub.
 ## License
 
 Decodex-UI is released under the MIT License. See the LICENSE file for more details.
+```

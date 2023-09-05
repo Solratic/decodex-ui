@@ -161,7 +161,7 @@ async def main(txhash: str):
     await cl.Message(content=res).send()
 
 
-@app.get("/tx/{txhash}")
+@app.get("/tx/{txhash}", tags=["api"])
 async def search(txhash: str):
     if not is_txhash(txhash):
         return JSONResponse(
@@ -183,7 +183,7 @@ async def search(txhash: str):
         )
 
 
-@app.get("/simulate")
+@app.get("/simulate", tags=["api"])
 async def simulate(
     from_address: str,
     to_address: str,
