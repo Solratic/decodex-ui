@@ -1,6 +1,7 @@
 from langchain import PromptTemplate, LLMChain
 from langchain.chat_models import AzureChatOpenAI
 import chainlit as cl
+from chainlit.server import app
 from decodex.translate import Translator
 from decodex.utils import (
     fmt_addr,
@@ -13,26 +14,17 @@ from jinja2 import Template
 from tabulate import tabulate
 import os
 import re
+from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
+from fastapi import status
+from typing import Optional, Union, Literal
 
 WEB3_PROVIDER_URI = os.getenv("WEB3_PROVIDER_URL")
-
-TEMPLATE = """
-Please explain the main objectives of the following transaction:
-
-Transaction: {txhash}
-Blocktime: {blocktime}
-From: {from_addr}
-To: {to_addr}
-Value: {value}
-GasUsed: {gas_used}
-Gas Price: {gas_price}
-Status: {status}
-{action_field}{actions}
-"""
 
 
 TEMPLATE = """\
 As a proficient blockchain data analyst, your role entails delivering concise insights into the intentions driving the given transactions. Please present a brief overview for each transaction, comprising three sentences. Include details such as the transaction time, involved parties, and their actions.
+
 Transaction: {{txhash}}
 Blocktime: {{blocktime}}
 From: {{from_addr}}
@@ -57,6 +49,12 @@ Balance Changes
 {{balance_change}}
 {% endif -%}
 """
+
+translator = Translator(
+    provider_uri=WEB3_PROVIDER_URI,
+    chain="ethereum",
+    verbose=True,
+)
 
 
 def is_txhash(in_str: str):
@@ -109,11 +107,6 @@ async def main(txhash: str):
     # Get the transaction
     await cl.Message(content="Searching transaction").send()
 
-    translator = Translator(
-        provider_uri=WEB3_PROVIDER_URI,
-        chain="ethereum",
-        verbose=True,
-    )
     tagged_tx = translator.translate(txhash)
 
     txhash = tagged_tx["txhash"]
@@ -166,3 +159,54 @@ async def main(txhash: str):
         callbacks=[cl.LangchainCallbackHandler()],
     )
     await cl.Message(content=res).send()
+
+
+@app.get("/tx/{txhash}")
+async def search(txhash: str):
+    if not is_txhash(txhash):
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={
+                "message": "This is not a valid transaction hash. Please try again."
+            },
+        )
+    try:
+        tagged = translator.translate(txhash=txhash)
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content=jsonable_encoder(tagged),
+        )
+    except Exception as e:
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"message": str(e)},
+        )
+
+
+@app.get("/simulate")
+async def simulate(
+    from_address: str,
+    to_address: str,
+    value: float = 0.0,
+    data: str = "0x",
+    block: Union[str, Literal["latest"]] = "latest",
+    gas_price: Optional[float] = "auto",
+):
+    try:
+        res = translator.simulate(
+            from_address=from_address,
+            to_address=to_address,
+            value=int(value * 1e18),
+            data=data,
+            block=block,
+            gas_price=gas_price,
+        )
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content=jsonable_encoder(res),
+        )
+    except Exception as e:
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"message": str(e)},
+        )
