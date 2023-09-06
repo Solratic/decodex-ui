@@ -21,8 +21,10 @@ from fastapi import status
 from typing import Optional, Union, Literal
 from jsonrpc import PriceOracle
 
-WEB3_PROVIDER_URI = os.getenv("WEB3_PROVIDER_URL")
-ORACLE = PriceOracle(WEB3_PROVIDER_URI)
+WEB3_PROVIDER_URL = os.getenv("WEB3_PROVIDER_URL")
+ORACLE_PROVIDER_URL = os.getenv("ORACLE_PROVIDER_URL")
+
+ORACLE = PriceOracle(ORACLE_PROVIDER_URL)
 WETH = {
     "ethereum": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
 }
@@ -55,7 +57,7 @@ Balance Changes
 """
 
 translator = Translator(
-    provider_uri=WEB3_PROVIDER_URI,
+    provider_uri=WEB3_PROVIDER_URL,
     chain="ethereum",
     verbose=True,
 )
