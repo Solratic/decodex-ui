@@ -3,6 +3,7 @@ from langchain.chat_models import AzureChatOpenAI
 import chainlit as cl
 from chainlit.server import app
 from decodex.translate import Translator
+from decodex.type import TaggedTx
 from decodex.utils import (
     fmt_addr,
     fmt_blktime,
@@ -18,10 +19,13 @@ from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from fastapi import status
 from typing import Optional, Union, Literal
+from jsonrpc import PriceOracle
 
 WEB3_PROVIDER_URI = os.getenv("WEB3_PROVIDER_URL")
-
-
+ORACLE = PriceOracle(WEB3_PROVIDER_URI)
+WETH = {
+    "ethereum": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+}
 TEMPLATE = """\
 As a proficient blockchain data analyst, your role entails delivering concise insights into the intentions driving the given transactions. Please present a brief overview for each transaction, comprising three sentences. Include details such as the transaction time, involved parties, and their actions.
 
@@ -63,6 +67,42 @@ def is_txhash(in_str: str):
         return True
     else:
         return False
+
+
+def fill_usd_price(chain: str, tx: TaggedTx):
+    balances = tx["balance_change"]
+    involved_tokens = set()
+    for balance in balances:
+        for asset in balance["assets"]:
+            address = asset["asset"]["address"]
+            if address != "ETH":
+                involved_tokens.add(address)
+            else:
+                "Add address of WETH"
+                weth = WETH[chain]
+                involved_tokens.add(weth)
+
+    block_timestamp = tx["block_time"]
+    timestamp = int(block_timestamp.timestamp())
+
+    prices = ORACLE.get_token_price(
+        chain="ethereum",
+        tokens=list(involved_tokens),
+        timestamp=timestamp,
+        tolerance=3600,
+        as_dict=True,
+    )
+
+    for balance in balances:
+        for asset in balance["assets"]:
+            address = asset["asset"]["address"]
+            if address == "ETH":
+                address = WETH[chain]
+            price_info = prices.get(address, None)
+            if price_info:
+                price_usd = float(price_info["price"])
+                balance_change_usd = asset["balance_change"] * price_usd
+                asset["balance_change_usd"] = balance_change_usd
 
 
 @cl.on_chat_start
@@ -172,6 +212,7 @@ async def search(txhash: str):
         )
     try:
         tagged = translator.translate(txhash=txhash)
+        fill_usd_price(chain="ethereum", tx=tagged)
         return JSONResponse(
             status_code=status.HTTP_200_OK,
             content=jsonable_encoder(tagged),
@@ -201,6 +242,7 @@ async def simulate(
             block=block,
             gas_price=gas_price,
         )
+        fill_usd_price(chain="ethereum", tx=res)
         return JSONResponse(
             status_code=status.HTTP_200_OK,
             content=jsonable_encoder(res),
