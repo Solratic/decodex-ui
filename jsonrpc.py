@@ -92,7 +92,7 @@ class PriceOracle:
             "hdt_getTokenPrice",
             [chain, token, timestamp],
         )
-        if response["result"] is None:
+        if response.get("result", None) is None:
             return None
 
         price = TokenPrice(**response["result"])
