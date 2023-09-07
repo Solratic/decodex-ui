@@ -20,6 +20,49 @@ from fastapi.encoders import jsonable_encoder
 from fastapi import status
 from typing import Optional, Union, Literal
 from jsonrpc import PriceOracle
+from datetime import datetime
+from decodex.type import TaggedTx, TaggedAddr
+from typing import TypedDict, List
+
+# 擴展 AssetBalanceChanged
+ExtendedAssetBalanceChanged = TypedDict(
+    "ExtendedAssetBalanceChanged",
+    {
+        "asset": TaggedAddr,  # address of the asset
+        "balance_change": float,  # balance change of the asset
+        "balance_change_usd": float,  # balance change in USD (Optional)
+    },
+    total=False,
+)
+
+# 使用擴展的 AssetBalanceChanged 來擴展 AccountBalanceChanged
+ExtendedAccountBalanceChanged = TypedDict(
+    "ExtendedAccountBalanceChanged",
+    {"address": TaggedAddr, "assets": List[ExtendedAssetBalanceChanged]},
+)
+
+# 使用擴展的 AccountBalanceChanged 來擴展 TaggedTx
+ExtendedTaggedTx = TypedDict(
+    "ExtendedTaggedTx",
+    {
+        "txhash": str,
+        "from": TaggedAddr,
+        "to": TaggedAddr,
+        "block_number": int,
+        "block_time": datetime,
+        "value": int,
+        "gas_used": int,
+        "gas_price": int,
+        "input": str,
+        "status": int,
+        "reason": Optional[str],
+        "method": Optional[str],
+        "actions": List[str],
+        "balance_change": List[ExtendedAccountBalanceChanged],
+    },
+    total=False,
+)
+
 
 WEB3_PROVIDER_URI = os.getenv("WEB3_PROVIDER_URI")
 ORACLE_PROVIDER_URI = os.getenv("ORACLE_PROVIDER_URI")
@@ -88,7 +131,7 @@ def fill_usd_price(chain: str, tx: TaggedTx):
 
     prices = ORACLE.get_token_price(
         chain="ethereum",
-        tokens=list(involved_tokens),
+        tokens=list(map(lambda x: x.lower(), involved_tokens)),
         timestamp=timestamp,
         tolerance=3600,
         as_dict=True,
@@ -99,7 +142,7 @@ def fill_usd_price(chain: str, tx: TaggedTx):
             address = asset["asset"]["address"]
             if address in {"Gas Fee", "ETH"}:
                 address = WETH[chain]
-            price_info = prices.get(address, None)
+            price_info = prices.get(address.lower(), None)
             if price_info:
                 price_usd = float(price_info["price"])
                 balance_change_usd = asset["balance_change"] * price_usd
@@ -203,7 +246,7 @@ async def main(txhash: str):
 
 
 @app.get("/tx/{txhash}", tags=["api"])
-async def search(txhash: str):
+async def search(txhash: str) -> ExtendedTaggedTx:
     if not is_txhash(txhash):
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -233,7 +276,7 @@ async def simulate(
     data: str = "0x",
     block: Union[str, Literal["latest"]] = "latest",
     gas_price: Optional[float] = "auto",
-):
+) -> ExtendedTaggedTx:
     try:
         res = translator.simulate(
             from_address=from_address,

@@ -54,6 +54,7 @@ class PriceOracle:
             chain name, e.g. ethereum
         token : str
             token address, e.g. 0x069f967be0ca21c7d793d8c343f71e597d9a49b3
+            ONLY LOWERCASE ADDRESS IS SUPPORTED
         timestamp : int
             timestamp in seconds
         tolerance : int | None
