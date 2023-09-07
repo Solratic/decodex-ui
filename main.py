@@ -77,12 +77,11 @@ def fill_usd_price(chain: str, tx: TaggedTx):
     for balance in balances:
         for asset in balance["assets"]:
             address = asset["asset"]["address"]
-            if address != "ETH":
-                involved_tokens.add(address)
-            else:
-                "Add address of WETH"
+            if address in {"Gas Fee", "ETH"}:
                 weth = WETH[chain]
                 involved_tokens.add(weth)
+            else:
+                involved_tokens.add(address)
 
     block_timestamp = tx["block_time"]
     timestamp = int(block_timestamp.timestamp())
@@ -98,7 +97,7 @@ def fill_usd_price(chain: str, tx: TaggedTx):
     for balance in balances:
         for asset in balance["assets"]:
             address = asset["asset"]["address"]
-            if address == "ETH":
+            if address in {"Gas Fee", "ETH"}:
                 address = WETH[chain]
             price_info = prices.get(address, None)
             if price_info:
