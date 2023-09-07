@@ -102,7 +102,7 @@ class PriceOracle:
 
 
 if __name__ == "__main__":
-    WEB3_PROVIDER_URL = os.getenv("WEB3_PROVIDER_URL")
+    WEB3_PROVIDER_URL = os.getenv("ORACLE_PROVIDER_URI")
     oracle = PriceOracle(WEB3_PROVIDER_URL)
     prices = oracle.get_token_price(
         chain="ethereum",
