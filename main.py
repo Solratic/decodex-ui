@@ -83,7 +83,7 @@ As a proficient blockchain data analyst, your role entails delivering concise in
 Transaction: {{txhash}}
 Blocktime: {{blocktime}}
 From: {{from_addr}}
-To: {{to_addr}}
+To: {{to_addr}}  {% if contract_created %} (Contract Created: {{contract_created}}){% endif %}
 Value: {{value}}
 GasUsed: {{gas_used}}
 Gas Price: {{gas_price}}
@@ -202,7 +202,12 @@ async def main(txhash: str):
     txhash = tagged_tx["txhash"]
     blocktime = fmt_blktime(tagged_tx["block_time"])
     from_addr = fmt_addr(tagged_tx["from"])
-    to_addr = fmt_addr(tagged_tx["to"])
+    to_addr = fmt_addr(tagged_tx["to"]) if tagged_tx["to"] else None
+    contract_created = (
+        fmt_addr(tagged_tx["contract_created"])
+        if tagged_tx["contract_created"]
+        else None
+    )
     value = fmt_value(tagged_tx["value"])
     gas_used = f'{tagged_tx["gas_used"]}'
     gas_price = fmt_gas(tagged_tx["gas_price"])
@@ -237,6 +242,7 @@ async def main(txhash: str):
             "blocktime": blocktime,
             "from_addr": from_addr,
             "to_addr": to_addr,
+            "contract_created": contract_created,
             "value": value,
             "gas_used": gas_used,
             "gas_price": gas_price,

@@ -11,6 +11,7 @@ backoff==2.2.1
 base58==2.1.1
 bidict==0.22.1
 bitarray==2.8.1
+cachetools==5.3.1
 certifi==2023.7.22
 cffi==1.15.1
 chainlit==0.6.3
@@ -20,8 +21,9 @@ colorama==0.4.6
 cryptography==41.0.3
 cytoolz==0.12.2
 dataclasses-json==0.5.14
-decodex==0.4.2
+decodex==0.5.2
 Deprecated==1.2.14
+diskcache==5.6.3
 eth-abi==4.2.0
 eth-account==0.9.0
 eth-hash==0.5.2
