@@ -71,7 +71,6 @@ ORACLE_PROVIDER_URI = os.getenv("ORACLE_PROVIDER_URI")
 ORACLE = None
 if ORACLE_PROVIDER_URI:
     ORACLE = PriceOracle(ORACLE_PROVIDER_URI)
-    ORACLE.force_connection()
 
 
 WETH = {
