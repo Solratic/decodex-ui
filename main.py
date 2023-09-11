@@ -288,8 +288,8 @@ async def simulate(
     to_address: str,
     value: float = 0.0,
     data: str = "0x",
-    block: Union[str, Literal["latest"]] = "latest",
-    gas_price: Optional[float] = "auto",
+    block: Union[int, Literal["latest"]] = "latest",
+    gas_price: Union[float, Literal["auto"]] = "auto",
 ) -> ExtendedTaggedTx:
     try:
         if gas_price is None:
