@@ -66,8 +66,7 @@ You should start the app by running `docker compose up -d` in the project direct
 - Simulate a transaction
 
   ```bash
-  curl localhost:8000/simulate/?from_address=0x31539c7a1bA66c74cAb1D05C5A1832C
-  B583aA64D&to_address=0x898e51FDFd3DA66912330eB95788Fc3c26d2913C
+  curl localhost:8000/simulate/?from_address=0x31539c7a1bA66c74cAb1D05C5A1832CB583aA64D&to_address=0x898e51FDFd3DA66912330eB95788Fc3c26d2913C
   ```
 
 ```

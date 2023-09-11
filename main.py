@@ -23,8 +23,8 @@ from jsonrpc import PriceOracle
 from datetime import datetime
 from decodex.type import TaggedTx, TaggedAddr, ERC20Compatible
 from typing import TypedDict, List
-from logging import Logger
-import sys
+from logging import Logger, INFO
+from decodex.constant import NULL_ADDRESS_0x0, NULL_ADDRESS_0xF
 
 # 擴展 AssetBalanceChanged
 ExtendedAssetBalanceChanged = TypedDict(
@@ -65,7 +65,7 @@ ExtendedTaggedTx = TypedDict(
     total=False,
 )
 
-LOGGER = Logger("decodex-ui")
+LOGGER = Logger("decodex-ui", level=INFO)
 WEB3_PROVIDER_URI = os.getenv("WEB3_PROVIDER_URI")
 ORACLE_PROVIDER_URI = os.getenv("ORACLE_PROVIDER_URI")
 ORACLE = None
@@ -125,7 +125,7 @@ def fill_usd_price(chain: str, tx: TaggedTx):
     for balance in balances:
         for asset in balance["assets"]:
             address = asset["asset"]["address"]
-            if address in {"Gas Fee", "ETH"}:
+            if address in {NULL_ADDRESS_0x0, NULL_ADDRESS_0xF}:
                 weth = WETH[chain]
                 involved_tokens.add(weth)
             else:
@@ -145,7 +145,7 @@ def fill_usd_price(chain: str, tx: TaggedTx):
     for balance in balances:
         for asset in balance["assets"]:
             address = asset["asset"]["address"]
-            if address in {"Gas Fee", "ETH"}:
+            if address in {NULL_ADDRESS_0x0, NULL_ADDRESS_0xF}:
                 address = WETH[chain]
             price_info = prices.get(address.lower(), None)
             if price_info:
@@ -269,6 +269,7 @@ async def search(txhash: str) -> ExtendedTaggedTx:
         tagged = translator.translate(txhash=txhash)
         if ORACLE is not None:
             fill_usd_price(chain="ethereum", tx=tagged)
+        LOGGER.info(tagged)
         return JSONResponse(
             status_code=status.HTTP_200_OK,
             content=jsonable_encoder(tagged),
@@ -291,6 +292,11 @@ async def simulate(
     gas_price: Optional[float] = "auto",
 ) -> ExtendedTaggedTx:
     try:
+        if gas_price is None:
+            gas_price = "auto"
+        elif isinstance(gas_price, float):
+            gas_price = int(gas_price * 1e9)
+
         res = translator.simulate(
             from_address=from_address,
             to_address=to_address,
@@ -299,7 +305,10 @@ async def simulate(
             block=block,
             gas_price=gas_price,
         )
-        fill_usd_price(chain="ethereum", tx=res)
+        if ORACLE is not None:
+            fill_usd_price(chain="ethereum", tx=res)
+        print(res)
+        LOGGER.info(res)
         return JSONResponse(
             status_code=status.HTTP_200_OK,
             content=jsonable_encoder(res),
