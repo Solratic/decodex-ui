@@ -18,6 +18,9 @@ class PriceOracle:
     def __init__(self, provider_uri):
         self.w3 = Web3(HTTPProvider(provider_uri))
 
+    def force_connection(self):
+        assert self.w3.is_connected(show_traceback=True)
+
     def get_token_price(
         self,
         chain: str,

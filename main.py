@@ -21,14 +21,16 @@ from fastapi import status
 from typing import Optional, Union, Literal
 from jsonrpc import PriceOracle
 from datetime import datetime
-from decodex.type import TaggedTx, TaggedAddr
+from decodex.type import TaggedTx, TaggedAddr, ERC20Compatible
 from typing import TypedDict, List
+from logging import Logger
+import sys
 
 # 擴展 AssetBalanceChanged
 ExtendedAssetBalanceChanged = TypedDict(
     "ExtendedAssetBalanceChanged",
     {
-        "asset": TaggedAddr,  # address of the asset
+        "asset": ERC20Compatible,  # address of the asset
         "balance_change": float,  # balance change of the asset
         "balance_change_usd": float,  # balance change in USD (Optional)
     },
@@ -63,11 +65,15 @@ ExtendedTaggedTx = TypedDict(
     total=False,
 )
 
-
+LOGGER = Logger("decodex-ui")
 WEB3_PROVIDER_URI = os.getenv("WEB3_PROVIDER_URI")
 ORACLE_PROVIDER_URI = os.getenv("ORACLE_PROVIDER_URI")
+ORACLE = None
+if ORACLE_PROVIDER_URI:
+    ORACLE = PriceOracle(ORACLE_PROVIDER_URI)
+    ORACLE.force_connection()
 
-ORACLE = PriceOracle(ORACLE_PROVIDER_URI)
+
 WETH = {
     "ethereum": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
 }
@@ -256,12 +262,14 @@ async def search(txhash: str) -> ExtendedTaggedTx:
         )
     try:
         tagged = translator.translate(txhash=txhash)
-        fill_usd_price(chain="ethereum", tx=tagged)
+        if ORACLE is not None:
+            fill_usd_price(chain="ethereum", tx=tagged)
         return JSONResponse(
             status_code=status.HTTP_200_OK,
             content=jsonable_encoder(tagged),
         )
     except Exception as e:
+        LOGGER.exception(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"message": str(e)},
@@ -292,6 +300,7 @@ async def simulate(
             content=jsonable_encoder(res),
         )
     except Exception as e:
+        LOGGER.exception(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"message": str(e)},
