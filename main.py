@@ -289,6 +289,7 @@ async def simulate(
     value: float = 0.0,
     data: str = "0x",
     block: Union[int, Literal["latest"]] = "latest",
+    gas: Union[int, Literal["auto"]] = "auto",
     gas_price: Union[float, Literal["auto"]] = "auto",
 ) -> ExtendedTaggedTx:
     try:
@@ -296,6 +297,8 @@ async def simulate(
             gas_price = "auto"
         elif isinstance(gas_price, float):
             gas_price = int(gas_price * 1e9)
+        if gas is None:
+            gas = "auto"
 
         res = translator.simulate(
             from_address=from_address,
@@ -303,6 +306,7 @@ async def simulate(
             value=int(value * 1e18),
             data=data,
             block=block,
+            gas=gas,
             gas_price=gas_price,
         )
         if ORACLE is not None:
