@@ -69,8 +69,6 @@ You should start the app by running `docker compose up -d` in the project direct
   curl localhost:8000/simulate/?from_address=0x31539c7a1bA66c74cAb1D05C5A1832CB583aA64D&to_address=0x898e51FDFd3DA66912330eB95788Fc3c26d2913C
   ```
 
-```
-
 ## Support
 
 If you encounter any issues or have questions, please open an issue on GitHub.
@@ -78,4 +76,3 @@ If you encounter any issues or have questions, please open an issue on GitHub.
 ## License
 
 Decodex-UI is released under the MIT License. See the LICENSE file for more details.
-```
