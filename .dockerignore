@@ -5,3 +5,4 @@ venv/
 .gitignore
 chainlit.md
 Dockerfile
+docker-compose.yml

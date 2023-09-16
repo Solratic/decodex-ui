@@ -1,5 +1,6 @@
 venv/
 .chainlit/
+.decodex/
 chainlit.md
 __pycache__/
 .env
