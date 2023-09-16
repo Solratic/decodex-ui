@@ -19,7 +19,6 @@ class PriceOracle:
     def __init__(self, provider_uri):
         self.w3 = Web3(HTTPProvider(provider_uri))
 
-    @cachetools.cached(cache=cachetools.LRUCache(maxsize=131072))
     def get_token_price(
         self,
         chain: str,
@@ -40,6 +39,7 @@ class PriceOracle:
         else:
             return [token for token in prices if token]
 
+    @cachetools.cached(cache=cachetools.LRUCache(maxsize=131072))
     def _get_token_price(
         self,
         chain: str,
