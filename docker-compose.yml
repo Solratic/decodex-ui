@@ -9,4 +9,4 @@ services:
       - ./.decodex/:/root/.decodex/:rw
       - ./.chainlit:/app/.chainlit:rw
     ports:
-      - "8000:8000"
+      - "${DECODEX_UI_PORT}:${DECODEX_UI_PORT}"
