@@ -18,6 +18,7 @@ import re
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from fastapi import status
+from fastapi import WebSocket
 from typing import Optional, Union, Literal
 from jsonrpc import PriceOracle
 from datetime import datetime
@@ -320,3 +321,36 @@ async def simulate(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"message": str(e)},
         )
+
+
+@app.websocket("/ws", name="websocket")
+async def websocket_endpoint(websocket: WebSocket):
+    chatllm = AzureChatOpenAI(
+        openai_api_key=os.getenv("OPENAI_CHAT_API_KEY"),
+        openai_api_base=os.getenv("OPENAI_CHAT_API_BASE"),
+        openai_api_version=os.getenv("OPENAI_CHAT_API_VERSION"),
+        openai_api_type=os.getenv("OPENAI_CHAT_API_TYPE"),
+        deployment_name=os.getenv("OPENAI_CHAT_API_MODEL"),
+        streaming=True,
+        temperature=0,
+    )
+    llm_chain = LLMChain(
+        llm=chatllm,
+        prompt=PromptTemplate.from_template(
+            template="As a proficient blockchain data analyst, your role entails delivering concise insights into the intentions driving the given transactions. Please present a brief overview for this transaction, comprising three sentences. Include details such as the transaction time, involved parties, and their actions. \n\n{{input}}",
+            template_format="jinja2",
+        ),
+        return_final_only=False,
+        verbose=True,
+    )
+    await websocket.accept()
+    try:
+        data = await websocket.receive_text()
+        for chunk in llm_chain.stream(input={"input": data}):
+            print("Sending", chunk["text"])
+            await websocket.send_text(chunk["text"])
+    except Exception as e:
+        LOGGER.exception(e)
+        await websocket.send_text(str(e))
+    finally:
+        await websocket.close()
