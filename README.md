@@ -42,7 +42,7 @@ Fill in the necessary variables in the `.env` file.
 Navigate to the project directory and execute the following command:
 
 ```bash
-docker compose up -d
+docker compose up -d --build
 ```
 
 This will pull the necessary Docker images and start the Decodex-UI application.

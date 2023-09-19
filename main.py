@@ -68,10 +68,7 @@ ExtendedTaggedTx = TypedDict(
 LOGGER = Logger("decodex-ui", level=INFO)
 WEB3_PROVIDER_URI = os.getenv("WEB3_PROVIDER_URI")
 ORACLE_PROVIDER_URI = os.getenv("ORACLE_PROVIDER_URI")
-ORACLE = None
-if ORACLE_PROVIDER_URI:
-    ORACLE = PriceOracle(ORACLE_PROVIDER_URI)
-
+ORACLE = None if not ORACLE_PROVIDER_URI else PriceOracle(ORACLE_PROVIDER_URI)
 
 WETH = {
     "ethereum": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
